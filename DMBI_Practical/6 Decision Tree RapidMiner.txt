@@ -1,0 +1,22 @@
+Step 1: Read CSV Operator (Import Configuration Wizard- choose dataset)
+
+Step 2: Set Role Operator [Edit Parameter List: attribute name(target); target role (label)]
+*Join "out" pin of Read CSV to "exa" pin of Set Role*
+
+Step 3: Split Data Operator [Edit Parameter List: ratio 0.7;0.3]
+*Join "exa" pin of Set Role with "exa" pin of Split Data.*
+
+Step 4: Decision tree Operator
+*Join the "par" port of Split Data to the "tra" port of Decision tree*
+
+Step 5: Apply Model Operator
+*Join the "mod" pin of Decision Tree to "mod" port of Apply Model*
+*Join the "par" port of Split Data to the "unl" port of Apply Model*
+
+Step 6: Performance Operator
+*Join the "lab" port of Apply Model to the "lab" port of Performance Operator*
+*Join the "mod" port of Apply Model to "res" port
+*Join the "per" port of Performance to "res" port
+
+Click "Run" 
+Voila!

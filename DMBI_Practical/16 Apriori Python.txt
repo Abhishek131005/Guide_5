@@ -1,0 +1,130 @@
+# --- Step 1: Install the Apriori Library ---
+# This library is not included in Colab by default.
+!pip install apyori
+
+print("\n'apyori' library installed successfully.")
+print("----------------------------------------")
+
+
+# --- Step 2: Import Libraries and Load Data ---
+
+import pandas as pd
+from google.colab import files
+from apyori import apriori
+
+# This line will open an "Upload" button for you to choose your file
+print("\nPlease upload your dataset (CSV file):")
+uploaded = files.upload()
+
+# Get the name of the file you just uploaded
+file_name = list(uploaded.keys())[0]
+
+# Read the CSV file into a pandas DataFrame
+df = pd.read_csv(file_name)
+
+print(f"\nSuccessfully loaded '{file_name}'")
+print("----------------------------------------")
+
+
+# --- Step 3: Data Inspection ---
+print("Step 3: Data Inspection")
+print("First 5 rows of the data:")
+print(df.head())
+print("\nColumn names and data types:")
+df.info()
+print("----------------------------------------")
+
+
+# --- Step 4: Data Preprocessing (Convert to Transactions) ---
+
+print("Step 4: Data Preprocessing for Apriori")
+print("Apriori needs a list of 'transactions' (a list of lists).")
+
+# NOTE: Apriori works on CATEGORICAL data.
+# This code will automatically select ONLY the 'object' (text) columns.
+# It will ignore numerical columns like 'math score'.
+# If you want to use numerical data, you must first "discretize" it
+# (e.g., bin 'math score' into 'Low', 'Medium', 'High').
+
+# Select only categorical columns
+df_cat = df.select_dtypes(include=['object'])
+
+# Handle any missing values by filling them with 'Missing'
+df_cat = df_cat.fillna('Missing')
+
+# Convert the DataFrame into a list of transactions
+# We combine the column name with its value to create unique "items"
+# e.g., "gender_female", "lunch_standard"
+transactions = []
+for i in range(len(df_cat)):
+    # .values returns the row as a list
+    row = df_cat.iloc[i].values
+
+    # Combine column name + value
+    items = [f"{df_cat.columns[j]}_{row[j]}" for j in range(len(df_cat.columns))]
+    transactions.append(items)
+
+print("Data has been converted into a list of transactions.")
+print("\nExample of the first transaction:")
+print(transactions[0])
+print("----------------------------------------")
+
+
+# --- Step 5: Run the Apriori Algorithm ---
+
+print("Step 5: Running the Apriori Algorithm")
+
+# 'min_support': The minimum proportion of transactions an itemset
+#                must appear in. (e.g., 0.005 = 0.5% of all transactions)
+# 'min_confidence': The minimum likelihood that 'THEN' will
+#                   happen given 'IF'. (e.g., 0.2 = 20%)
+# 'min_lift': Measures how much more likely 'THEN' is to happen
+#             when 'IF' is present. ( > 1 is good)
+# 'min_length': The minimum number of items in a rule (e.g., 2 = IF + THEN)
+
+association_rules = apriori(transactions,
+                            min_support=0.05,
+                            min_confidence=0.2,
+                            min_lift=1.0,
+                            min_length=2)
+
+# Convert the results to a list
+association_results = list(association_rules)
+
+print(f"Found {len(association_results)} association rules.")
+print("----------------------------------------")
+
+
+# --- Step 6: Display and Interpret the Results ---
+
+print("Step 6: Displaying the Association Rules")
+
+if not association_results:
+    print("No rules found. Try lowering 'min_support' or 'min_confidence'.")
+else:
+    print("--- Found Rules ---")
+
+    for item in association_results:
+        # Each 'item' is a rule
+
+        # 'pair' holds the IF and THEN items
+        pair = item.ordered_statistics[0]
+        items_base = tuple(pair.items_base)  # The "IF" part
+        items_add = tuple(pair.items_add)    # The "THEN" part
+
+        print(f"IF {items_base} THEN {items_add}")
+
+        # Print the metrics
+        print(f"  Support: {item.support:.4f}")
+        print(f"  Confidence: {pair.confidence:.4f}")
+        print(f"  Lift: {pair.lift:.4f}")
+        print("-" * 20)
+
+print("\n--- How to Interpret the Metrics ---")
+print(f"Support: The percentage of all transactions that contain")
+print(f"         both {items_base} and {items_add}.")
+print(f"Confidence: Of all the times {items_base} appears,")
+print(f"            {pair.confidence*100:.2f}% of the time {items_add} also appears.")
+print(f"Lift: {items_base} and {items_add} are {pair.lift:.2f} times")
+print(f"      more likely to be bought together than by random chance.")
+print(f"      (A lift > 1 suggests a meaningful rule.)")

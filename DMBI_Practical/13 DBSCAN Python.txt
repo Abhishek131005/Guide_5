@@ -1,0 +1,146 @@
+# --- Step 1: Import Libraries and Load Data ---
+
+import pandas as pd
+import matplotlib.pyplot as plt
+from google.colab import files
+from sklearn.cluster import DBSCAN
+from sklearn.preprocessing import StandardScaler
+from sklearn.impute import SimpleImputer
+from sklearn.metrics import silhouette_score
+from sklearn.decomposition import PCA
+
+# This line will open an "Upload" button for you to choose your file
+print("Please upload your dataset (CSV file):")
+uploaded = files.upload()
+
+# Get the name of the file you just uploaded
+file_name = list(uploaded.keys())[0]
+
+# Read the CSV file into a pandas DataFrame
+df = pd.read_csv(file_name)
+
+print(f"\nSuccessfully loaded '{file_name}'")
+print("----------------------------------------")
+
+
+# --- Step 2: Data Inspection ---
+# We look at the data to understand all features.
+# DBSCAN is unsupervised, so there is NO target column (y).
+
+print("Step 2: Data Inspection")
+print("First 5 rows of the data:")
+print(df.head())
+
+print("\nColumn names and data types:")
+df.info()
+print("----------------------------------------")
+
+
+# --- Step 3: Data Preprocessing ---
+
+print("Step 3: Data Preprocessing")
+
+# --- 3a. Handle Categorical Data (One-Hot Encoding) ---
+# We must convert all text columns to numbers.
+X = pd.get_dummies(df)
+print("Categorical columns have been one-hot encoded.")
+
+# --- 3b. Handle Missing Data (Imputation) ---
+# Fill any missing values with the mean of their column
+imputer = SimpleImputer(strategy='mean')
+X = imputer.fit_transform(X)
+print("Missing data has been filled with the mean.")
+
+# --- 3c. Feature Scaling ---
+# This is THE MOST IMPORTANT step for DBSCAN.
+# It ensures all features are on the same scale.
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+print("All features have been scaled.")
+print("\nPreprocessed Data (first 5 rows):")
+print(X_scaled[:5])
+print("----------------------------------------")
+
+
+# --- Step 4: Build and Train the DBSCAN Model ---
+
+print("Step 4: Building and Training the DBSCAN Model")
+
+# !!! IMPORTANT: YOU MUST TUNE THESE PARAMETERS !!!
+# 'eps' (epsilon) is the maximum distance between two points to be
+# considered neighbors.
+# 'min_samples' is the minimum number of points required to form a
+# dense region (a core point).
+#
+# These are just guesses! You must experiment with different
+# values to find good clusters for your specific dataset.
+EPSILON = 0.5
+MIN_SAMPLES = 5
+
+print(f"Using parameters: eps={EPSILON}, min_samples={MIN_SAMPLES}")
+
+# Initialize and train the model
+model = DBSCAN(eps=EPSILON, min_samples=MIN_SAMPLES)
+
+# fit_predict finds the clusters and returns the cluster label for each point.
+# Label -1 is special: it means the point is "noise" or an outlier.
+labels = model.fit_predict(X_scaled)
+
+print("Model training complete.")
+print("----------------------------------------")
+
+
+# --- Step 5: Evaluate the Clustering ---
+
+print("Step 5: Evaluating the Clustering")
+
+# Get all unique cluster labels.
+unique_labels = set(labels)
+print(f"Cluster labels found: {unique_labels}")
+
+# Calculate the number of clusters, ignoring noise (label -1)
+n_clusters_ = len(unique_labels) - (1 if -1 in unique_labels else 0)
+print(f"Number of clusters found: {n_clusters_}")
+
+# Calculate the number of noise points
+n_noise_ = list(labels).count(-1)
+print(f"Number of noise points (outliers): {n_noise_}")
+
+# Calculate Silhouette Score (only if there is more than 1 cluster)
+if n_clusters_ > 1:
+    score = silhouette_score(X_scaled, labels)
+    print(f"\nSilhouette Score: {score:.4f}")
+    print("(Score is from -1 to 1. Higher is better.)")
+else:
+    print("\nSilhouette Score cannot be calculated.")
+    print("Only one cluster (or only noise) was found.")
+    print("Try using different 'eps' and 'min_samples' values.")
+
+print("----------------------------------------")
+
+
+# --- Step 6: Visualize the Results (using PCA) ---
+
+print("Step 6: Visualizing the Clusters")
+
+# DBSCAN can work in many dimensions, but we can only plot in 2D.
+# We use PCA to reduce the data to 2 dimensions for visualization.
+pca = PCA(n_components=2)
+X_pca = pca.fit_transform(X_scaled)
+
+plt.figure(figsize=(10, 7))
+
+# Plot each cluster.
+# We create a scatter plot, coloring each point by its cluster label.
+# 'c=labels' does this automatically. 'cmap' provides the colors.
+plt.scatter(X_pca[:, 0], X_pca[:, 1], c=labels, cmap='viridis', s=50)
+
+plt.title(f"DBSCAN Clustering (eps={EPSILON}, min_samples={MIN_SAMPLES})")
+plt.xlabel("PCA Component 1")
+plt.ylabel("PCA Component 2")
+plt.colorbar(label='Cluster Label (-1 = Noise)')
+plt.show()
+
+print("\nVisualization Complete.")
+print("Points with label -1 (often purple or dark blue) are noise/outliers.")

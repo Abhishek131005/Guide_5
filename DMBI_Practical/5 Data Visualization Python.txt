@@ -1,0 +1,152 @@
+# --- Step 1: Import Libraries and Load Data ---
+
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+from google.colab import files
+
+# This line will open an "Upload" button for you to choose your file
+print("Please upload your dataset (CSV file):")
+uploaded = files.upload()
+
+# Get the name of the file you just uploaded
+file_name = list(uploaded.keys())[0]
+
+# Read the CSV file into a pandas DataFrame (a table)
+df = pd.read_csv(file_name)
+
+print(f"\nSuccessfully loaded '{file_name}'")
+print("----------------------------------------")
+
+
+# --- Step 2: Initial Data Inspection ---
+# We look at the columns to decide which plots to use.
+
+print("Step 2: Initial Data Inspection")
+print("First 5 rows of the data:")
+print(df.head())
+
+print("\nInformation about the data (columns and types):")
+print(df.info())
+print("----------------------------------------")
+
+
+# --- Step 3: Automatically Select Columns for Plotting ---
+# This code automatically finds the numerical and categorical columns.
+
+# Get list of numerical column names
+numerical_cols = df.select_dtypes(include=['int64', 'float64']).columns
+print(f"Found Numerical columns: {list(numerical_cols)}")
+
+# Get list of categorical (text) column names
+categorical_cols = df.select_dtypes(include=['object']).columns
+print(f"Found Categorical columns: {list(categorical_cols)}")
+print("----------------------------------------")
+
+
+# --- Step 4: Generate the Plots ---
+
+# --- 1. Histogram ---
+# Purpose: Shows the distribution (frequency) of a single numerical variable.
+print("\nPlot 1: Histogram")
+if not numerical_cols.empty:
+    col_to_plot = numerical_cols[0]  # Plot the first numerical column
+    print(f"Plotting for: {col_to_plot}")
+
+    plt.figure(figsize=(8, 5))
+    sns.histplot(df[col_to_plot], kde=True) # kde=True adds a smooth curve
+    plt.title(f"Histogram of {col_to_plot}")
+    plt.xlabel(col_to_plot)
+    plt.ylabel("Frequency")
+    plt.show()
+else:
+    print("No numerical columns found for a Histogram.")
+
+# --- 2. Box Plot ---
+# Purpose: Shows the 5-number summary (min, Q1, median, Q3, max) and outliers.
+print("\nPlot 2: Box Plot")
+if not numerical_cols.empty:
+    col_to_plot = numerical_cols[0]  # Plot the first numerical column
+    print(f"Plotting for: {col_to_plot}")
+
+    plt.figure(figsize=(8, 5))
+    sns.boxplot(x=df[col_to_plot])
+    plt.title(f"Box Plot of {col_to_plot}")
+    plt.xlabel(col_to_plot)
+    plt.show()
+else:
+    print("No numerical columns found for a Box Plot.")
+
+# --- 3. Scatter Plot ---
+# Purpose: Shows the relationship between two numerical variables.
+print("\nPlot 3: Scatter Plot")
+if len(numerical_cols) >= 2:
+    x_col = numerical_cols[0]  # Use first numerical col for x-axis
+    y_col = numerical_cols[1]  # Use second numerical col for y-axis
+    print(f"Plotting: {x_col} (X-axis) vs. {y_col} (Y-axis)")
+
+    plt.figure(figsize=(8, 5))
+    sns.scatterplot(x=df[x_col], y=df[y_col])
+    plt.title(f"Scatter Plot: {x_col} vs. {y_col}")
+    plt.xlabel(x_col)
+    plt.ylabel(y_col)
+    plt.show()
+else:
+    print("Need at least two numerical columns for a Scatter Plot.")
+
+# --- 4. Bar Chart ---
+# Purpose: Shows the frequency (count) of each category in a categorical variable.
+print("\nPlot 4: Bar Chart")
+if not categorical_cols.empty:
+    col_to_plot = categorical_cols[0]  # Plot the first categorical column
+    print(f"Plotting counts for: {col_to_plot}")
+
+    plt.figure(figsize=(8, 5))
+    # .value_counts() gets the counts, .plot(kind='bar') plots them
+    df[col_to_plot].value_counts().plot(kind='bar')
+    plt.title(f"Bar Chart of {col_to_plot}")
+    plt.xlabel(col_to_plot)
+    plt.ylabel("Count")
+    plt.xticks(rotation=45) # Rotate labels if they are long
+    plt.show()
+else:
+    print("No categorical columns found for a Bar Chart.")
+
+# --- 5. Heatmap ---
+# Purpose: Shows the correlation (relationship strength) between all numerical variables.
+print("\nPlot 5: Heatmap")
+if len(numerical_cols) >= 2:
+    print("Plotting correlation heatmap for all numerical columns.")
+
+    # Calculate the correlation matrix
+    corr = df[numerical_cols].corr()
+
+    plt.figure(figsize=(10, 6))
+    # annot=True shows the correlation numbers in each cell
+    sns.heatmap(corr, annot=True, cmap='coolwarm', fmt='.2f')
+    plt.title("Correlation Heatmap")
+    plt.show()
+else:
+    print("Need at least two numerical columns for a Heatmap.")
+
+# --- 6. Pie Chart ---
+# Purpose: Shows the proportion (percentage) of categories in a categorical variable.
+print("\nPlot 6: Pie Chart")
+if not categorical_cols.empty:
+    col_to_plot = categorical_cols[0]  # Plot the first categorical column
+    print(f"Plotting proportions for: {col_to_plot}")
+
+    # Get the counts for each category
+    counts = df[col_to_plot].value_counts()
+
+    plt.figure(figsize=(8, 8))
+    # autopct adds the percentage labels
+    counts.plot(kind='pie', autopct='%1.1f%%')
+    plt.title(f"Pie Chart of {col_to_plot}")
+    plt.ylabel('')  # Hides the y-axis label
+    plt.show()
+else:
+    print("No categorical columns found for a Pie Chart.")
+
+print("----------------------------------------")
+print("All visualizations are complete.")

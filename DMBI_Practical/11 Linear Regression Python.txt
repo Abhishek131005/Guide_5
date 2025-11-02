@@ -1,0 +1,167 @@
+# --- Step 1: Import Libraries and Load Data ---
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from google.colab import files
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+
+# This line will open an "Upload" button for you to choose your file
+print("Please upload your dataset (CSV file):")
+uploaded = files.upload()
+
+# Get the name of the file you just uploaded
+file_name = list(uploaded.keys())[0]
+
+# Read the CSV file into a pandas DataFrame
+df = pd.read_csv(file_name)
+
+print(f"\nSuccessfully loaded '{file_name}'")
+print("----------------------------------------")
+
+
+# --- Step 2: Data Inspection ---
+# We look at the data to identify our features (X) and target (y).
+
+print("Step 2: Data Inspection")
+print("First 5 rows of the data:")
+print(df.head())
+
+print("\nColumn names and data types:")
+df.info()
+print("\nThis step is important to identify the NUMERICAL TARGET column.")
+print("----------------------------------------")
+
+
+# --- Step 3: Data Preprocessing ---
+
+print("Step 3: Data Preprocessing")
+
+# !!! IMPORTANT: YOU MUST EDIT THIS LINE !!!
+# Change 'YOUR_TARGET_COLUMN_NAME_HERE' to the actual name of your target column.
+# This MUST be a numerical column you want to predict (e.g., 'Price', 'Salary', 'Score').
+TARGET_COLUMN = 'REPLACE WITH YOUR TARGET COLUMN'
+
+# Check if the target column exists and is numerical
+if TARGET_COLUMN not in df.columns:
+    print(f"Error: Target column '{TARGET_COLUMN}' not found in the dataset.")
+    print("Please edit the 'TARGET_COLUMN' variable in the code.")
+elif df[TARGET_COLUMN].dtype not in ['int64', 'float64']:
+    print(f"Error: Target column '{TARGET_COLUMN}' is not numerical.")
+    print("Regression requires a numerical target column to predict.")
+    print(f"The data type of your chosen column is: {df[TARGET_COLUMN].dtype}")
+else:
+    print(f"Target (y) column selected: {TARGET_COLUMN}")
+
+    # --- 3a. Handle Missing Data (Simple) ---
+    # Fill missing numerical data with the average (mean)
+    for col in df.select_dtypes(include=['float64', 'int64']).columns:
+        df[col] = df[col].fillna(df[col].mean())
+
+    # Fill missing categorical (text) data with the most common value (mode)
+    for col in df.select_dtypes(include=['object']).columns:
+        df[col] = df[col].fillna(df[col].mode()[0])
+
+    print("Missing data has been handled.")
+
+    # --- 3b. Separate Features (X) and Target (y) ---
+    X = df.drop(TARGET_COLUMN, axis=1)
+    y = df[TARGET_COLUMN]
+
+    # --- 3c. Encode Categorical Data ---
+    # Convert all text feature columns (X) into numbers using One-Hot Encoding
+    X = pd.get_dummies(X)
+    print("Features (X) have been one-hot encoded.")
+
+    print("\nPreprocessed Features (X) - First 5 rows:")
+    print(X.head())
+    print("----------------------------------------")
+
+
+    # --- Step 4: Split Data into Training and Testing Sets ---
+
+    print("Step 4: Splitting data into Train and Test sets")
+    # We use 70% of the data for training and 30% for testing
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+    print(f"Training set size: {X_train.shape[0]} rows")
+    print(f"Testing set size: {X_test.shape[0]} rows")
+    print("----------------------------------------")
+
+
+    # --- Step 5: Feature Scaling ---
+    # We scale the features so they all have a similar range.
+    # This helps the Linear Regression model converge faster and more reliably.
+
+    print("Step 5: Feature Scaling")
+    scaler = StandardScaler()
+    X_train = scaler.fit_transform(X_train)
+    X_test = scaler.transform(X_test)
+
+    print("Training and Test features have been scaled.")
+    print("----------------------------------------")
+
+
+    # --- Step 6: Build and Train the Linear Regression Model ---
+
+    print("Step 6: Building and Training the Linear Regression Model")
+
+    # Initialize the model
+    model = LinearRegression()
+
+    # Train the model on the training data
+    model.fit(X_train, y_train)
+
+    print("Model training complete.")
+    print("----------------------------------------")
+
+
+    # --- Step 7: Make Predictions and Evaluate the Model ---
+
+    print("Step 7: Evaluating the Model")
+
+    # Use the trained model to make predictions on the test data
+    y_pred = model.predict(X_test)
+
+    # We cannot use 'Accuracy' for regression. We use other metrics:
+    print("\n--- Regression Evaluation Metrics ---")
+
+    # 1. R-squared (R2)
+    r2 = r2_score(y_test, y_pred)
+    print(f"R-squared (R2): {r2:.4f}")
+    print(f"(This means the model explains {r2*100:.2f}% of the variance in the target.)")
+
+    # 2. Mean Absolute Error (MAE)
+    mae = mean_absolute_error(y_test, y_pred)
+    print(f"\nMean Absolute Error (MAE): {mae:.4f}")
+    print(f"(On average, the model's prediction is off by +/- {mae:.4f} units.)")
+
+    # 3. Mean Squared Error (MSE)
+    mse = mean_squared_error(y_test, y_pred)
+    print(f"\nMean Squared Error (MSE): {mse:.4f}")
+
+    # 4. Root Mean Squared Error (RMSE)
+    rmse = np.sqrt(mse)
+    print(f"\nRoot Mean Squared Error (RMSE): {rmse:.4f}")
+    print(f"(This is the square root of MSE, also in the same units as the target.)")
+    print("----------------------------------------")
+
+
+    # --- Step 8: Visualize the Results (Actual vs. Predicted) ---
+
+    print("Step 8: Visualizing Results")
+    print("Plotting Actual vs. Predicted values...")
+
+    plt.figure(figsize=(8, 6))
+    plt.scatter(y_test, y_pred, alpha=0.7)
+
+    # Add a "perfect prediction" line (y=x) in red
+    plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'r--', lw=2)
+
+    plt.title('Actual vs. Predicted Values')
+    plt.xlabel('Actual Values')
+    plt.ylabel('Predicted Values')
+    plt.show()

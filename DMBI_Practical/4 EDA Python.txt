@@ -1,0 +1,100 @@
+# --- Step 1: Import Library and Load Data ---
+
+import pandas as pd
+from google.colab import files
+
+# This line will open an "Upload" button for you to choose your file
+print("Please upload your dataset (CSV file):")
+uploaded = files.upload()
+
+# Get the name of the file you just uploaded
+file_name = list(uploaded.keys())[0]
+
+# Read the CSV file into a pandas DataFrame (a table)
+df = pd.read_csv(file_name)
+
+print(f"\nSuccessfully loaded '{file_name}'")
+print("----------------------------------------")
+
+
+# --- Step 2: Initial Data Inspection ---
+# We look at the data to understand its structure.
+
+print("Step 2: Initial Data Inspection")
+print("First 5 rows of the data:")
+print(df.head())
+
+print("\nInformation about the data (columns, data types):")
+print(df.info())
+print("----------------------------------------")
+
+
+# --- Step 3: Descriptive Statistics for Numerical Columns ---
+# Here we calculate all the required stats for columns that contain numbers.
+
+print("Step 3: Descriptive Statistics for NUMERICAL Columns")
+
+# First, select only the columns that are numbers (int or float)
+numerical_df = df.select_dtypes(include=['int64', 'float64'])
+
+if numerical_df.empty:
+    print("No numerical columns found to analyze.")
+else:
+    # 1. The 'describe()' function gives most of what we need!
+    print("--- 1. Overall Statistical Summary ---")
+    # This single command provides:
+    # count, mean (Central Tendency), std (Dispersion),
+    # min, 25%(Q1), 50%(Median - Central Tendency), 75%(Q3), max
+    print(numerical_df.describe())
+
+    print("\n--- 2. Central Tendency (Detailed) ---")
+    print("\nMean (Average):")
+    print(numerical_df.mean())
+
+    print("\nMedian (Middle Value):")
+    print(numerical_df.median())
+
+    print("\nMode (Most Frequent Value):")
+    # .mode() returns a DataFrame; .iloc[0] shows the first mode
+    print(numerical_df.mode().iloc[0])
+
+    print("\n--- 3. Measures of Dispersion (Detailed) ---")
+    print("\nVariance (How spread out the data is):")
+    print(numerical_df.var())
+
+    print("\nStandard Deviation (from .describe()):")
+    print(numerical_df.std())
+
+    print("\nRange (Maximum value - Minimum value):")
+    data_range = numerical_df.max() - numerical_df.min()
+    print(data_range)
+
+    print("\nInterquartile Range (IQR = Q3 - Q1):")
+    Q1 = numerical_df.quantile(0.25)
+    Q3 = numerical_df.quantile(0.75)
+    IQR = Q3 - Q1
+    print(IQR)
+
+print("----------------------------------------")
+
+
+# --- Step 4: Descriptive Statistics for Categorical Columns ---
+# We also analyze the text-based columns.
+
+print("Step 4: Descriptive Statistics for CATEGORICAL (Text) Columns")
+
+# Select only the columns that are 'object' (text)
+categorical_df = df.select_dtypes(include=['object'])
+
+if categorical_df.empty:
+    print("No categorical columns found.")
+else:
+    # describe() on object columns gives:
+    # count (total non-empty rows)
+    # unique (number of different categories)
+    # top (the Mode - Central Tendency)
+    # freq (frequency of the top/mode value)
+    print(categorical_df.describe())
+
+print("----------------------------------------")
+print("Exploratory Data Analysis (Descriptive Statistics) Complete.")

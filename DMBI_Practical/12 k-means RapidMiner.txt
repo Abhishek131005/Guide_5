@@ -1,0 +1,18 @@
+Step 1: Read CSV operator (import dataset)
+
+Step 2: Nominal to Numerical Operator
+*Join "out" port of Read CSV to "exa" port of Nominal to Numerical*
+
+Step 3: Normalize Operator
+*Join "exa" of Nominal to Numerical to "exa" of Normalize* 
+
+Step 4: k-means Clustering Operator (k=3)
+*Join "exa" of Normalize to "exa" of k-means Clustering*
+
+Step 5: Performance (Cluster Distance Performance)
+*Join 1st "clu" of k-means Clustering to "clu" of Performance*
+*Join 2nd "clu" of k-means Clustering to "exa" of Performance*
+*Join "per" of Performance to "res"*
+
+Click on Run
+Voila!

@@ -1,0 +1,114 @@
+# --- Step 1: Import Libraries and Load Data ---
+
+import pandas as pd
+from google.colab import files
+from sklearn.preprocessing import MinMaxScaler
+
+# This line will open an "Upload" button for you to choose your file
+print("Please upload your dataset (CSV file):")
+uploaded = files.upload()
+
+# Get the name of the file you just uploaded
+# This code assumes you only upload ONE file
+file_name = list(uploaded.keys())[0]
+
+# Read the CSV file into a pandas DataFrame (a table)
+df = pd.read_csv(file_name)
+
+print(f"\nSuccessfully loaded '{file_name}'")
+print("----------------------------------------")
+
+
+# --- Step 2: Initial Data Inspection ---
+# We look at the data to understand it.
+
+print("Step 2: Initial Data Inspection")
+print("First 5 rows of the data:")
+print(df.head())
+
+print("\nInformation about the data (columns, data types, missing values):")
+print(df.info())
+
+print("\nStatistical summary for number columns (like mean, min, max):")
+print(df.describe())
+print("----------------------------------------")
+
+
+# --- Step 3: Handle Missing Data ---
+# We find and fill any empty (null/NaN) cells.
+
+print("Step 3: Handling Missing Data")
+print("Missing values BEFORE cleaning:")
+print(df.isnull().sum())
+
+# Fill missing numerical data with the average (mean)
+# We use select_dtypes to automatically find all number columns
+for col in df.select_dtypes(include=['float64', 'int64']).columns:
+    df[col] = df[col].fillna(df[col].mean())
+
+# Fill missing categorical (text) data with the most common value (mode)
+# We use select_dtypes to automatically find all text ('object') columns
+for col in df.select_dtypes(include=['object']).columns:
+    df[col] = df[col].fillna(df[col].mode()[0])
+
+print("\nMissing values AFTER cleaning (should all be 0):")
+print(df.isnull().sum())
+print("----------------------------------------")
+
+
+# --- Step 4: Handle Categorical Data (Encoding) ---
+# We convert text columns (like 'Yes'/'No' or 'Red'/'Blue') into numbers.
+
+print("Step 4: Handling Categorical Data (One-Hot Encoding)")
+# pd.get_dummies automatically finds all text columns and converts them
+# It creates new columns (e.g., 'Color_Red', 'Color_Blue') with 0s and 1s
+df_encoded = pd.get_dummies(df)
+
+print("Data shape BEFORE encoding:", df.shape)
+print("Data shape AFTER encoding:", df_encoded.shape)
+print("\nData after encoding (first 5 rows):")
+print(df_encoded.head())
+print("----------------------------------------")
+
+
+# --- Step 5: Handle Duplicate Data ---
+# We find and remove any rows that are exact copies.
+
+print("Step 5: Handling Duplicate Data")
+duplicates_found = df_encoded.duplicated().sum()
+print(f"Number of duplicate rows found: {duplicates_found}")
+
+# Remove the duplicates
+df_cleaned = df_encoded.drop_duplicates()
+
+print(f"Data shape after removing duplicates: {df_cleaned.shape}")
+print("----------------------------------------")
+
+
+# --- Step 6: Feature Scaling (Normalization) ---
+# We scale all number columns to be in the same range (0 to 1).
+# This stops columns with big numbers (like 'Salary') from dominating
+# columns with small numbers (like 'Age').
+
+print("Step 6: Feature Scaling (Normalization)")
+# Initialize the scaler
+scaler = MinMaxScaler()
+
+# Fit and transform the data
+# This scales ALL columns to be between 0 and 1
+df_scaled = pd.DataFrame(scaler.fit_transform(df_cleaned), columns=df_cleaned.columns)
+
+print("Data after scaling (first 5 rows):")
+print(df_scaled.head())
+print("----------------------------------------")
+
+
+# --- Step 7: Show Final Preprocessed Data ---
+
+print("Step 7: Final Preprocessed Data")
+print("The data is now clean and ready for a machine learning model.")
+print("\nFinal Data Information:")
+print(df_scaled.info())
+
+print("\nFinal Data (first 5 rows):")
+print(df_scaled.head())
